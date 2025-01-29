@@ -50,7 +50,6 @@ namespace Task_Management_System_API.Controllers
                     UpdateBy = item.UpdateBy,
                     UpdateDate = item.UpdateDate,
                     IsActive = item.IsActive,
-               
                             });
                 }
 
@@ -96,6 +95,7 @@ namespace Task_Management_System_API.Controllers
         [HttpPost]
         public async Task<ActionResult> PostTaskAssign([FromBody] TaskAssignVM taskAssignVM)
         {
+
             // Validate input
             if (taskAssignVM == null)
             {

@@ -23,7 +23,7 @@ namespace Task_Management_System_API.Controllers
         // Get all tasks
         [HttpGet]
         //[ProducesResponseType(typeof(IEnumerable<Task>), 200)] // Correct the response type to IEnumerable<Task>
-        public async Task<IActionResult> GetTask(string username, int status)  //status 0=pending, 1=complete, 2=all
+        public async Task<IActionResult> GetTasks(string username, int status)  //status 0=pending, 1=complete, 2=all
         {
             try
             {
@@ -77,9 +77,54 @@ namespace Task_Management_System_API.Controllers
                 return StatusCode(500, $"Internal server error: {ex.Message}");
             }
         }
+        [HttpGet]
+        public async Task<IActionResult> GetTask()
+        {
+            try
+            {
+                // Fetch TaskAssigns with navigation properties included
+                var data = await _context.Tasks
+                    // Includes Task navigation property
+                    .Include(t => t.TaskCategory) // Includes TaskCategory through Task
+                    .ToListAsync();
 
-        // Get a specific task by ID
-        [HttpGet("{id}")]
+                // Check if data is empty
+                if (data == null || !data.Any())
+                {
+                    return NotFound("No task assignments found.");
+                }
+
+                // Map data to TaskAssignVM including related data
+                var result = new List<TaskViewModel>();
+
+                foreach (var item in data)
+                {
+                    result.Add(new TaskViewModel
+                    {
+                        CreateBy = item.CreateBy,
+                        CreateDate = item.CreateDate,
+                        Description = item.Description,
+                        DeadLine = item.DeadLine,
+                        UpdateBy = item.UpdateBy,
+                        UpdateDate = item.UpdateDate,
+                        TaskCategoryId = item.TaskCategoryId,
+                        TaskId = item.TaskId,
+                        TaskCategory = item.TaskCategory?.Name
+
+                    });
+                }
+
+
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                // Log the exception (use your logging mechanism)
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
+        }
+        
+       [HttpGet("{id}")]
         public async Task<ActionResult<Task>> GetTask(int id)
         {
             var task = await _context.Tasks
