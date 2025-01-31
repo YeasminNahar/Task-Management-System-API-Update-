@@ -10,6 +10,7 @@ namespace Task_Management_System_API.ViewModels
 
         public string CreateBy { get; set; }
         public int? TaskId { get; set; }
+        public DateTime? DeadLine { get; set; }
 
         public DateTime? CreateDate { get; set; }
 

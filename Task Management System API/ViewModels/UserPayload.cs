@@ -33,6 +33,7 @@ namespace Task_Management_System_API.ViewModels
         public DateTime? UpdateDate { get; set; }
 
         public bool IsActive { get; set; }
+        public int? TaskStatus { get; set; }
 
       
     }

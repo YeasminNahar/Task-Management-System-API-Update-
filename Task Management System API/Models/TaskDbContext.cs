@@ -17,11 +17,11 @@ public partial class TaskDbContext : DbContext
 
     public virtual DbSet<Company> Companies { get; set; }
 
-    //public virtual DbSet<FileAttach> FileAttaches { get; set; }
+    public virtual DbSet<FileAttach> FileAttaches { get; set; }
 
     public virtual DbSet<Member> Members { get; set; }
 
-    //public virtual DbSet<MemberInvitation> MemberInvitations { get; set; }
+    public virtual DbSet<MemberInvitation> MemberInvitations { get; set; }
 
     public virtual DbSet<Notification> Notifications { get; set; }
 
@@ -31,7 +31,7 @@ public partial class TaskDbContext : DbContext
 
     public virtual DbSet<TaskCategory> TaskCategories { get; set; }
 
-    //public virtual DbSet<TaskDetail> TaskDetails { get; set; }
+    public virtual DbSet<TaskDetail> TaskDetails { get; set; }
 
     public virtual DbSet<UserDetail> UserDetails { get; set; }
 
@@ -53,28 +53,28 @@ public partial class TaskDbContext : DbContext
             entity.Property(e => e.CompanyName).HasMaxLength(50);
         });
 
-        //modelBuilder.Entity<FileAttach>(entity =>
-        //{
-        //    entity.HasIndex(e => e.TaskDetailId, "IX_FileAttaches_TaskDetailId");
+        modelBuilder.Entity<FileAttach>(entity =>
+        {
+            entity.HasIndex(e => e.TaskDetailId, "IX_FileAttaches_TaskDetailId");
 
-        //    entity.HasOne(d => d.TaskDetail).WithMany(p => p.FileAttaches).HasForeignKey(d => d.TaskDetailId);
-        //});
+            entity.HasOne(d => d.TaskDetail).WithMany(p => p.FileAttaches).HasForeignKey(d => d.TaskDetailId);
+        });
 
         modelBuilder.Entity<Member>(entity =>
         {
             entity.Property(e => e.MemberId).HasColumnName("MemberID");
         });
 
-        //modelBuilder.Entity<MemberInvitation>(entity =>
-        //{
-        //    entity.HasKey(e => e.SendId);
+        modelBuilder.Entity<MemberInvitation>(entity =>
+        {
+            entity.HasKey(e => e.SendId);
 
-        //    entity.HasIndex(e => e.TaskId, "IX_MemberInvitations_TaskID");
+            entity.HasIndex(e => e.TaskId, "IX_MemberInvitations_TaskID");
 
-        //    entity.Property(e => e.TaskId).HasColumnName("TaskID");
+            entity.Property(e => e.TaskId).HasColumnName("TaskID");
 
-        //    entity.HasOne(d => d.Task).WithMany(p => p.MemberInvitations).HasForeignKey(d => d.TaskId);
-        //});
+            entity.HasOne(d => d.Task).WithMany(p => p.MemberInvitations).HasForeignKey(d => d.TaskId);
+        });
 
         modelBuilder.Entity<Notification>(entity =>
         {
@@ -118,19 +118,19 @@ public partial class TaskDbContext : DbContext
             entity.Property(e => e.UpdateBy).IsRequired();
         });
 
-        //modelBuilder.Entity<TaskDetail>(entity =>
-        //{
-        //    entity.HasIndex(e => e.TaskId, "IX_TaskDetails_TaskID");
+        modelBuilder.Entity<TaskDetail>(entity =>
+        {
+            entity.HasIndex(e => e.TaskId, "IX_TaskDetails_TaskID");
 
-        //    entity.Property(e => e.TaskDetailId).HasColumnName("TaskDetailID");
-        //    entity.Property(e => e.CompleteBy).IsRequired();
-        //    entity.Property(e => e.CreateBy).IsRequired();
-        //    entity.Property(e => e.Description).IsRequired();
-        //    entity.Property(e => e.TaskId).HasColumnName("TaskID");
-        //    entity.Property(e => e.UpdateBy).IsRequired();
+            entity.Property(e => e.TaskDetailId).HasColumnName("TaskDetailID");
+            entity.Property(e => e.CompleteBy).IsRequired();
+            entity.Property(e => e.CreateBy).IsRequired();
+            entity.Property(e => e.Description).IsRequired();
+            entity.Property(e => e.TaskId).HasColumnName("TaskID");
+            entity.Property(e => e.UpdateBy).IsRequired();
 
-        //    entity.HasOne(d => d.Task).WithMany(p => p.TaskDetails).HasForeignKey(d => d.TaskId);
-        //});
+            entity.HasOne(d => d.Task).WithMany(p => p.TaskDetails).HasForeignKey(d => d.TaskId);
+        });
 
         modelBuilder.Entity<UserDetail>(entity =>
         {

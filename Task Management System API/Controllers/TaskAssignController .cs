@@ -50,6 +50,8 @@ namespace Task_Management_System_API.Controllers
                     UpdateBy = item.UpdateBy,
                     UpdateDate = item.UpdateDate,
                     IsActive = item.IsActive,
+                    DeadLine=item.Task.DeadLine
+                    
                             });
                 }
 
@@ -131,6 +133,12 @@ namespace Task_Management_System_API.Controllers
                 // Save task assignment
                 _context.TaskAssigns.Add(taskAssign);
                 await _context.SaveChangesAsync();
+
+                task.TaskStatus = 1;
+                _context.Entry(task).State = EntityState.Modified;
+                await _context.SaveChangesAsync();
+
+
             }
             catch (Exception ex)
             {

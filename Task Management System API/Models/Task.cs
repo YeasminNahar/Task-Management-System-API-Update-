@@ -23,11 +23,13 @@ public partial class Task
 
     public bool IsActive { get; set; }
 
-    //public virtual ICollection<MemberInvitation> MemberInvitations { get; set; } = new List<MemberInvitation>();
+    public int? TaskStatus { get; set; }
+
+    public virtual ICollection<MemberInvitation> MemberInvitations { get; set; } = new List<MemberInvitation>();
 
     public virtual ICollection<TaskAssign> TaskAssigns { get; set; } = new List<TaskAssign>();
 
     public virtual TaskCategory TaskCategory { get; set; }
 
-    //public virtual ICollection<TaskDetail> TaskDetails { get; set; } = new List<TaskDetail>();
+    public virtual ICollection<TaskDetail> TaskDetails { get; set; } = new List<TaskDetail>();
 }

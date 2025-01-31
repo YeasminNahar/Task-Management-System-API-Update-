@@ -23,11 +23,11 @@ namespace Task_Management_System_API.Controllers
         // Get all tasks
         [HttpGet]
         //[ProducesResponseType(typeof(IEnumerable<Task>), 200)] // Correct the response type to IEnumerable<Task>
-        public async Task<IActionResult> GetTasks(string username, int status)  //status 0=pending, 1=complete, 2=all
+        public async Task<IActionResult> GetTasks(string username, int? status)  //status 0=pending, 1=complete, 2=all
         {
             try
             {
-                var task =new List<Task>();
+                var task = new List<Task>();
                 var user = HttpContext.User.Identity.Name;
                 var RoleId = await _context.UserDetails.Where(x => x.UserName.ToLower() == username.ToLower()).Select(x => x.RoleId).FirstOrDefaultAsync();
                 var userRole = await _context.UserRoles.Where(x => x.RoleId == RoleId).Select(x => x.RoleName).FirstOrDefaultAsync();
@@ -35,12 +35,12 @@ namespace Task_Management_System_API.Controllers
                 {
                     var memberId = await _context.UserDetails.Where(x => x.UserName == username).Select(x => x.MemberId).FirstOrDefaultAsync();
                     var memberTaskLists = await _context.TaskAssigns.Where(x => x.MemberId == memberId).Select(x => x.TaskId).ToListAsync();
-                    task = await _context.Tasks.Include(t => t.TaskCategory).Where(x => status == 0 ? x.IsActive == false : (status == 1 ? x.IsActive == true : x.IsActive == x.IsActive)
+                    task = await _context.Tasks.Include(t => t.TaskCategory).Where(x => (status == 3 ? x.TaskStatus == x.TaskStatus : x.TaskStatus == status)
                     && memberTaskLists.Contains(x.TaskId)).ToListAsync();
                 }
                 else
                 {
-                    task = await _context.Tasks.Include(t => t.TaskCategory).Where(x => status == 0 ? x.IsActive == false : (status == 1 ? x.IsActive == true : x.IsActive == x.IsActive)).ToListAsync();
+                    task = await _context.Tasks.Include(t => t.TaskCategory).Where(x => status == 3 ? x.TaskStatus == x.TaskStatus : x.TaskStatus == status).ToListAsync();
                 }
 
 
@@ -62,6 +62,7 @@ namespace Task_Management_System_API.Controllers
                         UpdateBy = item.UpdateBy,
                         UpdateDate = item.UpdateDate,
                         TaskCategoryId = item.TaskCategoryId,
+                        TaskStatus = item.TaskStatus,
                         TaskId = item.TaskId,
                         TaskCategory = item.TaskCategory?.Name
 
@@ -83,7 +84,7 @@ namespace Task_Management_System_API.Controllers
             try
             {
                 // Fetch TaskAssigns with navigation properties included
-                var data = await _context.Tasks
+                var data = await _context.Tasks.Where(x => x.TaskStatus == 0)
                     // Includes Task navigation property
                     .Include(t => t.TaskCategory) // Includes TaskCategory through Task
                     .ToListAsync();
@@ -123,8 +124,8 @@ namespace Task_Management_System_API.Controllers
                 return StatusCode(500, $"Internal server error: {ex.Message}");
             }
         }
-        
-       [HttpGet("{id}")]
+
+        [HttpGet("{id}")]
         public async Task<ActionResult<Task>> GetTask(int id)
         {
             var task = await _context.Tasks
@@ -282,7 +283,7 @@ namespace Task_Management_System_API.Controllers
             }
 
             // Remove the task
-            task.IsActive=true;
+            task.TaskStatus = 2;
             _context.Entry(task).State = EntityState.Modified;
             await _context.SaveChangesAsync();
 
@@ -298,6 +299,7 @@ namespace Task_Management_System_API.Controllers
         public async Task<IActionResult> GetTaskCountByUsername(string username)
         {
             var user = HttpContext.User.Identity.Name;
+            var NewTask = 0;
             var PendingTask = 0;
             var CompleteTask = 0;
             var TotalTask = 0;
@@ -307,18 +309,27 @@ namespace Task_Management_System_API.Controllers
             {
                 var memberId = await _context.UserDetails.Where(x => x.UserName == username).Select(x => x.MemberId).FirstOrDefaultAsync();
                 var memberTaskLists = await _context.TaskAssigns.Where(x => x.MemberId == memberId).Select(x => x.TaskId).ToListAsync();
-                PendingTask = await _context.Tasks.Where(x => x.IsActive == false && memberTaskLists.Contains(x.TaskId)).CountAsync();
-                CompleteTask = await _context.Tasks.Where(x => x.IsActive == true && memberTaskLists.Contains(x.TaskId)).CountAsync();
+                //NewTask = await _context.Tasks.Where(x => x.TaskStatus == 0 && memberTaskLists.Contains(x.TaskId)).CountAsync();
+                PendingTask = await _context.Tasks.Where(x => x.TaskStatus == 1 && memberTaskLists.Contains(x.TaskId)).CountAsync();
+                CompleteTask = await _context.Tasks.Where(x => x.TaskStatus == 2 && memberTaskLists.Contains(x.TaskId)).CountAsync();
                 TotalTask = PendingTask + CompleteTask;
+                var memberTasks = await _context.Tasks.Where(x => memberTaskLists.Contains(x.TaskId) &&
+                                                          (x.TaskStatus == 1 || x.TaskStatus == 2))
+                                              .ToListAsync();
+                return Ok(new { newTask = NewTask, pendingTask = PendingTask, completeTask = CompleteTask, totalTask = TotalTask, taskList = memberTasks });
             }
             else
             {
-                PendingTask = await _context.Tasks.Where(x => x.IsActive == false).CountAsync();
-                CompleteTask = await _context.Tasks.Where(x => x.IsActive == true).CountAsync();
-                TotalTask = PendingTask + CompleteTask;
-            }
+                // Admin এর জন্য সব টাস্ক গননা
+                NewTask = await _context.Tasks.Where(x => x.TaskStatus == 0).CountAsync();
+                PendingTask = await _context.Tasks.Where(x => x.TaskStatus == 1).CountAsync();
+                CompleteTask = await _context.Tasks.Where(x => x.TaskStatus == 2).CountAsync();
+                TotalTask = NewTask + PendingTask + CompleteTask;
 
-            return Ok(new { pendingTask = PendingTask, completeTask = CompleteTask, totalTask = TotalTask });
+                // Admin এর জন্য সব টাস্ক লিস্ট
+                var allTasks = await _context.Tasks.ToListAsync();
+                return Ok(new { newTask = NewTask, pendingTask = PendingTask, completeTask = CompleteTask, totalTask = TotalTask, taskList = allTasks });
+            }
         }
     }
 }
