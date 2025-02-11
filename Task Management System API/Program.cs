@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Task_Management_System_API.Models;
+using Task_Management_System_API.Services;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -19,7 +20,10 @@ builder.Services.AddCors(options =>
 
 builder.Services.AddEndpointsApiExplorer(); // Necessary for endpoint discovery
 builder.Services.AddSwaggerGen();            // Adds Swagger generation
+builder.Services.Configure<SmtpSettings>(builder.Configuration.GetSection("SmtpSettings"));
 
+// Register EmailService as a transient dependency
+builder.Services.AddTransient<IEmailService, EmailService>();
 var app = builder.Build();
 
 // Use CORS policy globally (for all endpoints)

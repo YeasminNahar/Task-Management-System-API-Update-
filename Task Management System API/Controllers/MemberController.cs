@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Runtime.CompilerServices;
 using Task_Management_System_API.Models;
+using Task_Management_System_API.Services;
 using Task_Management_System_API.ViewModels;
 
 namespace Task_Management_System_API.Controllers
@@ -12,10 +13,12 @@ namespace Task_Management_System_API.Controllers
     public class MemberController : ControllerBase
     {
         private readonly TaskDbContext db;
+        private readonly IEmailService _emailService;
 
-        public MemberController(TaskDbContext context)
+        public MemberController(TaskDbContext context,IEmailService emailService)
         {
             db = context;
+            _emailService = emailService;
         }
 
         // GET: api/Member
@@ -79,9 +82,32 @@ namespace Task_Management_System_API.Controllers
 
                     db.UserDetails.Add(userer);
                     await db.SaveChangesAsync();
-                }
+                    string emailBody = $@"
+             <p>Welcome</p>
+                <p>Your account has been successfully created. Below are your login credentials:</p>
+             <p>This is your Login Username: <strong>{userer.UserName}</strong></p>
+             
+              <p>Password:<strong>{userer.PassWord}</strong></p>  
+             <p>Best regards,<br/>Task Management System</p>";
 
-                return Ok(new {MemberName=member.MemberName,UserName=member.Email });
+                    // Verify the email
+                    if (!IsValidEmail(yeasmin.Email))
+                    {
+                        Console.WriteLine($"Invalid email address: {yeasmin.Email}");
+                        return BadRequest("The email address is invalid.");
+                    }
+
+                    // Check if the email is not empty and is a valid address
+                    if (string.IsNullOrEmpty(yeasmin.Email) || !member.Email.Contains("@"))
+                    {
+                        return BadRequest("Invalid email address.");
+                    }
+
+                    await _emailService.SendEmailAsync(yeasmin.Email, "New Member created ", emailBody);
+                }
+            
+
+                return Ok(new {MemberName=member.MemberName,Email=member.Email });
             }
             catch (Exception ex)
             {
@@ -90,7 +116,18 @@ namespace Task_Management_System_API.Controllers
             }
             
         }
-
+        private bool IsValidEmail(string email)
+        {
+            try
+            {
+                var addr = new System.Net.Mail.MailAddress(email);
+                return addr.Address == email;
+            }
+            catch
+            {
+                return false;
+            }
+        }
 
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateMember(int id, [FromBody] Member updatedMember)

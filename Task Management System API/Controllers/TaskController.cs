@@ -168,6 +168,7 @@ namespace Task_Management_System_API.Controllers
                 UpdateBy = task.UpdateBy,
                 UpdateDate = task.UpdateDate,
                 IsActive = task.IsActive,
+                TaskStatus = task.TaskStatus,
                 TaskCategoryId = task.TaskCategoryId,
 
 
@@ -222,6 +223,7 @@ namespace Task_Management_System_API.Controllers
             existingTask.UpdateBy = task.UpdateBy ?? existingTask.UpdateBy;
             existingTask.UpdateDate = DateTime.UtcNow; // UTC for consistency
             existingTask.IsActive = task.IsActive;
+            existingTask.TaskStatus = task.TaskStatus;
             existingTask.TaskCategoryId = task.TaskCategoryId;
 
             try

@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Task_Management_System_API.Models;
+using Task_Management_System_API.Services;
 using Task_Management_System_API.ViewModels;
 
 namespace Task_Management_System_API.Controllers
@@ -10,11 +11,14 @@ namespace Task_Management_System_API.Controllers
     public class TaskAssignController : ControllerBase
     {
         private readonly TaskDbContext _context;
+        private readonly IEmailService _emailService;
 
-        public TaskAssignController(TaskDbContext context)
+        public TaskAssignController(TaskDbContext context, IEmailService emailService)
         {
             _context = context;
+            _emailService = emailService;
         }
+
 
         // GET: api/TaskAssign
         [HttpGet]
@@ -97,7 +101,6 @@ namespace Task_Management_System_API.Controllers
         [HttpPost]
         public async Task<ActionResult> PostTaskAssign([FromBody] TaskAssignVM taskAssignVM)
         {
-
             // Validate input
             if (taskAssignVM == null)
             {
@@ -134,14 +137,32 @@ namespace Task_Management_System_API.Controllers
                 _context.TaskAssigns.Add(taskAssign);
                 await _context.SaveChangesAsync();
 
-                task.TaskStatus = 1;
-                _context.Entry(task).State = EntityState.Modified;
-                await _context.SaveChangesAsync();
+                string emailBody = $@"
+             <p>Hello {member.MemberName},</p>
+             <p>A new task titled <strong>{taskAssign.Task.Description}</strong> has been assigned to you.</p>
+             <p><strong>Description:{taskAssign.Task.Description}</strong></p>
+              <p><strong>DeadLine:{taskAssign.Task.DeadLine}</strong></p>  
+             <p>Best regards,<br/>Task Management System</p>";
 
+                // Verify the email
+                if (!IsValidEmail(member.Email))
+                {
+                    Console.WriteLine($"Invalid email address: {member.Email}");
+                    return BadRequest("The email address is invalid.");
+                }
 
+                // Check if the email is not empty and is a valid address
+                if (string.IsNullOrEmpty(member.Email) || !member.Email.Contains("@"))
+                {
+                    return BadRequest("Invalid email address.");
+                }
+
+                await _emailService.SendEmailAsync(member.Email, "New Task Assigned ", emailBody);
             }
             catch (Exception ex)
             {
+                Console.WriteLine($"Email sending failed: {ex.Message}");
+
                 return StatusCode(500, $"Internal server error: {ex.Message}");
             }
 
@@ -151,10 +172,23 @@ namespace Task_Management_System_API.Controllers
                 taskAssignId = taskAssign.TaskAssignId,
                 memberId = taskAssign.MemberId,
                 taskId = taskAssign.TaskId,
-                
+
 
             });
         }
+        private bool IsValidEmail(string email)
+        {
+            try
+            {
+                var addr = new System.Net.Mail.MailAddress(email);
+                return addr.Address == email;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
 
         // PUT: api/TaskAssign/5
         [HttpPut("{id}")]
